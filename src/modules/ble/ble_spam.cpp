@@ -297,7 +297,7 @@ const DeviceType android_models[] = {
     {0xAA187F}, {0xDCE9EA}, {0x87B25F}, {0x1448C9}, {0x13B39D}, {0x7C6CDB}, {0x005EF9}, {0xE2106F},
     {0xB37A62}, {0x92ADC9}
 };
-int android_models_count = sizeof(android_models) / sizeof(android_models[0]);
+const size_t android_models_count = sizeof(android_models) / sizeof(android_models[0]);
 
 // ============================================================================
 // Samsung EasySetup — Galaxy Watch + Galaxy Buds models

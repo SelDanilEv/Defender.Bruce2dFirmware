@@ -200,6 +200,7 @@ static void _readArpTable(struct netif *iface) {
 // ============================================
 void netcutLoadVipList() {
     s_vipMacs.clear();
+    s_vipMacs.reserve(NETCUT_MAX_DEVICES);
     if (!LittleFS.exists(NETCUT_VIP_FILE)) return;
 
     File f = LittleFS.open(NETCUT_VIP_FILE, "r");

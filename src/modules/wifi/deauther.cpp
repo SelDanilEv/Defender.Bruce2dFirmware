@@ -62,7 +62,7 @@ static bool clientScanActive = false;
 // =============================================================================
 
 String getVendorFromMAC(const String &mac) {
-    static const std::pair<String, String> oui_list[] = {
+    static const char *const oui_list[][2] = {
         {"00:1A:2B", "Apple"    },
         {"00:1E:52", "Apple"    },
         {"00:25:00", "Apple"    },
@@ -105,7 +105,7 @@ String getVendorFromMAC(const String &mac) {
 
     String prefix = mac.substring(0, 8); // "XX:XX:XX"
     for (auto &entry : oui_list) {
-        if (prefix == entry.first) { return entry.second; }
+        if (prefix == entry[0]) { return entry[1]; }
     }
     return "Unknown";
 }

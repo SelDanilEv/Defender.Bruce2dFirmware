@@ -2442,23 +2442,42 @@ void updateKarmaDisplay() {
             y += LH + 2;
         }
 
-        padprint("Total:" + String(totalProbes));
-        padprint("Uniq:" + String(uniqueClients), 7);
-        padprint("Act:" + String(activeNetworks.size()), 13);
-        padprintln("Pend:" + String(pendingPortals.size()), 19);
+        char lineBuf[64];
 
-        padprint("Queue:" + String(responseQueue.size()));
-        padprint("Beac:" + String(beaconsSent), 7);
-        padprint("Karma:" + String(karmaResponsesSent), 13);
-        padprintln("Clone:" + String(cloneAttacksLaunched), 19);
+        snprintf(lineBuf, sizeof(lineBuf), "Total:%u", (unsigned)totalProbes);
+        padprint(lineBuf);
+        snprintf(lineBuf, sizeof(lineBuf), "Uniq:%u", (unsigned)uniqueClients);
+        padprint(lineBuf, 7);
+        snprintf(lineBuf, sizeof(lineBuf), "Act:%u", (unsigned)activeNetworks.size());
+        padprint(lineBuf, 13);
+        snprintf(lineBuf, sizeof(lineBuf), "Pend:%u", (unsigned)pendingPortals.size());
+        padprintln(lineBuf, 19);
 
-        padprint("Port:" + String(autoPortalsLaunched) + "/" + String(activePortalCount()));
-        padprint("HS:" + String(handshakeBuffer.size()), 10);
-        padprintln("PMKID:" + String(pmkidCaptured), 16);
+        snprintf(lineBuf, sizeof(lineBuf), "Queue:%u", (unsigned)responseQueue.size());
+        padprint(lineBuf);
+        snprintf(lineBuf, sizeof(lineBuf), "Beac:%u", (unsigned)beaconsSent);
+        padprint(lineBuf, 7);
+        snprintf(lineBuf, sizeof(lineBuf), "Karma:%u", (unsigned)karmaResponsesSent);
+        padprint(lineBuf, 13);
+        snprintf(lineBuf, sizeof(lineBuf), "Clone:%u", (unsigned)cloneAttacksLaunched);
+        padprintln(lineBuf, 19);
 
-        padprint("Ch:" + String(pgm_read_byte(&karma_channels[channl % 14])));
-        String hopStatus = String(auto_hopping ? "Auto:" : "Man:") + String(hop_interval) + "ms";
-        padprintln(hopStatus, 7);
+        snprintf(
+            lineBuf, sizeof(lineBuf), "Port:%u/%u", (unsigned)autoPortalsLaunched,
+            (unsigned)activePortalCount()
+        );
+        padprint(lineBuf);
+        snprintf(lineBuf, sizeof(lineBuf), "HS:%u", (unsigned)handshakeBuffer.size());
+        padprint(lineBuf, 10);
+        snprintf(lineBuf, sizeof(lineBuf), "PMKID:%u", (unsigned)pmkidCaptured);
+        padprintln(lineBuf, 16);
+
+        snprintf(lineBuf, sizeof(lineBuf), "Ch:%d", (int)pgm_read_byte(&karma_channels[channl % 14]));
+        padprint(lineBuf);
+        snprintf(
+            lineBuf, sizeof(lineBuf), "%s%ums", auto_hopping ? "Auto:" : "Man:", (unsigned)hop_interval
+        );
+        padprintln(lineBuf, 7);
 
         char macStr[18];
         snprintf(
@@ -2472,9 +2491,10 @@ void updateKarmaDisplay() {
             currentBSSID[4],
             currentBSSID[5]
         );
-        padprint("MAC:" + String(macStr));
+        snprintf(lineBuf, sizeof(lineBuf), "MAC:%s", macStr);
+        padprint(lineBuf);
 
-        String modeText = "";
+        const char *modeText;
         switch (karmaMode) {
             case MODE_PASSIVE: modeText = "PASSIVE"; break;
             case MODE_BROADCAST: modeText = "BROADCAST"; break;
@@ -2484,9 +2504,14 @@ void updateKarmaDisplay() {
         padprintln(modeText, 3);
 
         if (templateSelected && !selectedTemplate.name.isEmpty()) {
-            String templateText = "Template:" + selectedTemplate.name;
-            if (templateText.length() > 40) templateText = templateText.substring(0, 37) + "...";
-            padprintln(templateText);
+            snprintf(lineBuf, sizeof(lineBuf), "Template:%s", selectedTemplate.name.c_str());
+            if (strlen(lineBuf) > 40) {
+                lineBuf[37] = '.';
+                lineBuf[38] = '.';
+                lineBuf[39] = '.';
+                lineBuf[40] = '\0';
+            }
+            padprintln(lineBuf);
         }
 
         if (activePortal != nullptr) {
@@ -2494,12 +2519,18 @@ void updateKarmaDisplay() {
             unsigned long portalLeftMs = (portalAge >= PORTAL_MAX_IDLE) ? 0 : (PORTAL_MAX_IDLE - portalAge);
             unsigned long portalLeftSec = portalLeftMs / 1000;
 
-            String portalText = "Active Portal: " + activePortal->ssid;
-            padprintln(portalText + "(" + String(portalLeftSec) + "s)");
+            snprintf(
+                lineBuf, sizeof(lineBuf), "Active Portal: %s(%lus)", activePortal->ssid.c_str(),
+                portalLeftSec
+            );
+            padprintln(lineBuf);
         }
 
         if (broadcastAttack.isActive()) {
-            padprintln("Broadcast:" + broadcastAttack.getProgressString());
+            snprintf(
+                lineBuf, sizeof(lineBuf), "Broadcast:%s", broadcastAttack.getProgressString().c_str()
+            );
+            padprintln(lineBuf);
         } else {
             padprintln("");
         }
@@ -2772,16 +2803,29 @@ void karma_setup() {
                      int y = 45;
                      tft.setTextSize(1);
                      tft.setCursor(10, y);
-                     padprint("Total: " + String(totalProbes));
-                     padprintln("Unique: " + String(uniqueClients), 10);
-                     padprint("Karma: " + String(karmaResponsesSent));
-                     padprintln("Beacons: " + String(beaconsSent), 10);
-                     padprint("Active: " + String(activeNetworks.size()));
-                     padprintln("Pending: " + String(pendingPortals.size()), 10);
-                     padprint("Portals: " + String(activePortalCount()));
-                     padprintln("Blacklist: " + String(macBlacklist.size()), 10);
-                     padprint("PMKID: " + String(pmkidCaptured));
-                     padprintln("Handshakes: " + String(handshakeBuffer.size()), 10);
+                     char statsBuf[64];
+                     snprintf(statsBuf, sizeof(statsBuf), "Total: %u", (unsigned)totalProbes);
+                     padprint(statsBuf);
+                     snprintf(statsBuf, sizeof(statsBuf), "Unique: %u", (unsigned)uniqueClients);
+                     padprintln(statsBuf, 10);
+                     snprintf(statsBuf, sizeof(statsBuf), "Karma: %u", (unsigned)karmaResponsesSent);
+                     padprint(statsBuf);
+                     snprintf(statsBuf, sizeof(statsBuf), "Beacons: %u", (unsigned)beaconsSent);
+                     padprintln(statsBuf, 10);
+                     snprintf(statsBuf, sizeof(statsBuf), "Active: %u", (unsigned)activeNetworks.size());
+                     padprint(statsBuf);
+                     snprintf(statsBuf, sizeof(statsBuf), "Pending: %u", (unsigned)pendingPortals.size());
+                     padprintln(statsBuf, 10);
+                     snprintf(statsBuf, sizeof(statsBuf), "Portals: %u", (unsigned)activePortalCount());
+                     padprint(statsBuf);
+                     snprintf(statsBuf, sizeof(statsBuf), "Blacklist: %u", (unsigned)macBlacklist.size());
+                     padprintln(statsBuf, 10);
+                     snprintf(statsBuf, sizeof(statsBuf), "PMKID: %u", (unsigned)pmkidCaptured);
+                     padprint(statsBuf);
+                     snprintf(
+                         statsBuf, sizeof(statsBuf), "Handshakes: %u", (unsigned)handshakeBuffer.size()
+                     );
+                     padprintln(statsBuf, 10);
                      padprintln("Sel: Back");
                      while (!check(SelPress) && !check(EscPress)) {
                          if (check(PrevPress)) break;
@@ -3259,20 +3303,44 @@ void karma_setup() {
                      int y = 45;
                      tft.setTextSize(1);
                      tft.setCursor(10, y);
-                     padprint("Probes: " + String(totalProbes));
-                     padprintln("Uniq Clients: " + String(uniqueClients), 11);
-                     padprint("Responses: " + String(karmaResponsesSent));
-                     padprintln("Portals: " + String(autoPortalsLaunched), 11);
-                     padprint("Clone Atks: " + String(cloneAttacksLaunched));
-                     padprintln("Deauth Pkt: " + String(deauthPacketsSent), 11);
+                     char statsBuf[64];
+                     snprintf(statsBuf, sizeof(statsBuf), "Probes: %u", (unsigned)totalProbes);
+                     padprint(statsBuf);
+                     snprintf(statsBuf, sizeof(statsBuf), "Uniq Clients: %u", (unsigned)uniqueClients);
+                     padprintln(statsBuf, 11);
+                     snprintf(statsBuf, sizeof(statsBuf), "Responses: %u", (unsigned)karmaResponsesSent);
+                     padprint(statsBuf);
+                     snprintf(
+                         statsBuf, sizeof(statsBuf), "Portals: %u", (unsigned)autoPortalsLaunched
+                     );
+                     padprintln(statsBuf, 11);
+                     snprintf(
+                         statsBuf, sizeof(statsBuf), "Clone Atks: %u", (unsigned)cloneAttacksLaunched
+                     );
+                     padprint(statsBuf);
+                     snprintf(
+                         statsBuf, sizeof(statsBuf), "Deauth Pkt: %u", (unsigned)deauthPacketsSent
+                     );
+                     padprintln(statsBuf, 11);
                      int vulnCount = 0;
                      for (const auto &clientPair : clientBehaviors)
                          if (clientPair.second.isVulnerable) vulnCount++;
-                     padprint("Vulnerable: " + String(vulnCount));
-                     padprintln("Pend Atks: " + String(pendingPortals.size()), 11);
-                     padprint("Act Portal: " + String(activePortalCount()));
-                     padprintln("PMKID Capt: " + String(pmkidCaptured), 11);
-                     padprintln("Handshakes: " + String(handshakeBuffer.size()));
+                     snprintf(statsBuf, sizeof(statsBuf), "Vulnerable: %d", vulnCount);
+                     padprint(statsBuf);
+                     snprintf(
+                         statsBuf, sizeof(statsBuf), "Pend Atks: %u", (unsigned)pendingPortals.size()
+                     );
+                     padprintln(statsBuf, 11);
+                     snprintf(
+                         statsBuf, sizeof(statsBuf), "Act Portal: %u", (unsigned)activePortalCount()
+                     );
+                     padprint(statsBuf);
+                     snprintf(statsBuf, sizeof(statsBuf), "PMKID Capt: %u", (unsigned)pmkidCaptured);
+                     padprintln(statsBuf, 11);
+                     snprintf(
+                         statsBuf, sizeof(statsBuf), "Handshakes: %u", (unsigned)handshakeBuffer.size()
+                     );
+                     padprintln(statsBuf);
                      padprintln("");
                      padprintln("Sel: Back");
                      while (!check(SelPress) && !check(EscPress)) {

@@ -342,8 +342,10 @@ void printMemoryUsage(const char *msg) {
     );
 }
 
-String repeatString(int length, String character) {
-    String result = "";
+String repeatString(int length, char character) {
+    if (length <= 0) return String();
+    String result;
+    result.reserve(length);
     for (int i = 0; i < length; i++) { result += character; }
     return result;
 }

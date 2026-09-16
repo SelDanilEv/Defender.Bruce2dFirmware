@@ -194,7 +194,7 @@ bool selectWifiNetwork(String &ssid, int &encryption) {
                 int32_t ch = WiFi.channel(i);
                 // Check if the network is secured
                 String encryptionPrefix = (encryptionType == WIFI_AUTH_OPEN) ? "" : "#";
-                String encryptionTypeStr;
+                const char *encryptionTypeStr;
                 switch (encryptionType) {
                     case WIFI_AUTH_OPEN: encryptionTypeStr = "Open"; break;
                     case WIFI_AUTH_WEP: encryptionTypeStr = "WEP"; break;

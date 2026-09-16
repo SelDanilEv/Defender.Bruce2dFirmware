@@ -78,7 +78,7 @@ void MassStorage::setupUsbEvent() {
     });
 }
 
-void MassStorage::displayMessage(String message) {
+void MassStorage::displayMessage(const char *message) {
     drawMainBorderWithTitle("Mass Storage");
     padprintln("");
     padprintln(message);

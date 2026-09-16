@@ -104,7 +104,6 @@ bool showGif(
 bool showJpeg(FS &fs, const String &filename, int x = 0, int y = 0, bool center = false);
 bool showJpeg(const uint8_t *data_array, size_t data_size, int x, int y, bool center = false);
 
-uint16_t getComplementaryColor(uint16_t color);
 uint16_t getComplementaryColor2(uint16_t color);
 uint16_t getColorVariation(uint16_t color, int delta = 10, int direction = 0);
 

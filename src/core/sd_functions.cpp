@@ -36,15 +36,6 @@ bool setupLittleFS(uint8_t maxFiles) {
 }
 
 /***************************************************************************************
-** Function name: closeLittleFS
-** Description:   Turn Off LittleFS, set littlefsMounted state to false
-***************************************************************************************/
-void closeLittleFS() {
-    LittleFS.end();
-    Serial.println("LittleFS Unmounted...");
-}
-
-/***************************************************************************************
 ** Function name: setupSdCard
 ** Description:   Start SD Card
 ***************************************************************************************/
@@ -391,21 +382,6 @@ String readLineFromFile(File myFile) {
         line += character;
     }
     return line;
-}
-
-/***************************************************************************************
-** Function name: folderExists
-** Description:   check if a folder exists
-***************************************************************************************/
-bool folderExists(FS fs, String path) {
-    if (path == "" || path == "/") return true;
-
-    File dir = fs.open(path);
-    if (!dir) return false;
-
-    bool isDir = dir.isDirectory();
-    dir.close();
-    return isDir;
 }
 
 /***************************************************************************************

@@ -38,20 +38,6 @@ void find_i2c_addresses() {
     releaseI2CBus();
 }
 
-uint8_t find_first_i2c_address() {
-    TwoWire *Wire = acquireI2CBus();
-    uint8_t found = 0;
-    for (uint8_t i = FIRST_I2C_ADDRESS; i <= LAST_I2C_ADDRESS; i++) {
-        Wire->beginTransmission(i);
-        if (Wire->endTransmission() == 0) {
-            found = i;
-            break;
-        }
-    }
-    releaseI2CBus();
-    return found;
-}
-
 bool check_i2c_address(uint8_t i2c_address) {
     TwoWire *Wire = acquireI2CBus();
     Wire->beginTransmission(i2c_address);

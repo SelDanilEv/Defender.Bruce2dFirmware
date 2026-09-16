@@ -377,6 +377,7 @@ void mainloop() {
 }
 
 void lorachat() {
+    messages.reserve(maxMessages);
     // set filesystem thing
     if (!LittleFS.exists("/chats.txt")) {
         File file = LittleFS.open("/chats.txt", "w");

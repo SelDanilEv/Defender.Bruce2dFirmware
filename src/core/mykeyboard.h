@@ -28,5 +28,4 @@ keyStroke _getKeyPress(); // This function must be implemented in the interface.
 
 // Core functions, depends on the implementation of the funtions above in the interface.h
 bool checkShortcutPress();
-int checkNumberShortcutPress();
 char checkLetterShortcutPress();

@@ -1653,65 +1653,6 @@ uint16_t getComplementaryColor2(uint16_t color) {
     return (r << 11) | (g << 5) | b;
 }
 /***************************************************************************************
-** Function name: getComplementaryColor
-** Description:   Get complementary color in RGB565 format
-***************************************************************************************/
-uint16_t getComplementaryColor(uint16_t color) {
-    double r = ((color >> 11) & 0x1F) / 31.0;
-    double g = ((color >> 5) & 0x3F) / 63.0;
-    double b = (color & 0x1F) / 31.0;
-
-    double cmax = fmax(r, fmax(g, b));
-    double cmin = fmin(r, fmin(g, b));
-    double delta = cmax - cmin;
-
-    double hue = 0.0;
-    if (delta == 0) hue = 0.0;
-    else if (cmax == r) hue = 60 * fmod((g - b) / delta, 6);
-    else if (cmax == g) hue = 60 * ((b - r) / delta + 2);
-    else hue = 60 * ((r - g) / delta + 4);
-
-    if (hue < 0) hue += 360;
-
-    double lightness = (cmax + cmin) / 2;
-    double saturation = (delta == 0) ? 0 : delta / (1 - std::abs(2 * lightness - 1));
-
-    double compHue = fmod(hue + 180, 360);
-
-    double c = (1 - std::abs(2 * lightness - 1)) * saturation;
-    double x = c * (1 - std::abs(fmod(compHue / 60, 2) - 1));
-    double m = lightness - c / 2;
-
-    double compR = 0, compG = 0, compB = 0;
-    if (compHue >= 0 && compHue < 60) {
-        compR = c;
-        compG = x;
-    } else if (compHue >= 60 && compHue < 120) {
-        compR = x;
-        compG = c;
-    } else if (compHue >= 120 && compHue < 180) {
-        compG = c;
-        compB = x;
-    } else if (compHue >= 180 && compHue < 240) {
-        compG = x;
-        compB = c;
-    } else if (compHue >= 240 && compHue < 300) {
-        compB = c;
-        compR = x;
-    } else {
-        compB = x;
-        compR = c;
-    }
-
-    uint16_t compl_color = uint8_t(compR * 31) << 11 | uint8_t(compG * 63) << 5 | uint8_t(compB * 31);
-
-    // change black color
-    if (compl_color == 0) compl_color = color - 0x1111;
-
-    return compl_color;
-}
-
-/***************************************************************************************
 ** Function name: getColorVariation
 ** Description:   Get a variation of color in RGB565 format
 ***************************************************************************************/

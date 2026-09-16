@@ -684,12 +684,14 @@ static String extractSsid(const wifi_promiscuous_pkt_t *packet) {
         uint8_t tagLength = payload[offset + 1];
         if (offset + 2 + tagLength > len) break;
         if (tagNumber == 0x00) {
-            String ssid = "";
-            for (int i = 0; i < tagLength; ++i) {
+            char ssidBuf[33];
+            size_t ssidLen = 0;
+            for (int i = 0; i < tagLength && ssidLen < sizeof(ssidBuf) - 1; ++i) {
                 uint8_t chValue = payload[offset + 2 + i];
-                if (isprint(chValue)) { ssid += (char)chValue; }
+                if (isprint(chValue)) { ssidBuf[ssidLen++] = (char)chValue; }
             }
-            return ssid;
+            ssidBuf[ssidLen] = '\0';
+            return String(ssidBuf);
         }
         offset += 2 + tagLength;
     }
@@ -901,20 +903,19 @@ void printAddress(const uint8_t *addr) {
 }
 
 /* write packet to file */
-void newPacketSD(uint32_t ts_sec, uint32_t ts_usec, uint32_t len, uint8_t *buf, File pcap_file) {
+void newPacketSD(uint32_t ts_sec, uint32_t ts_usec, uint32_t len, uint8_t *buf, File &pcap_file) {
     if (pcap_file) {
-
-        uint32_t orig_len = len;
-        uint32_t incl_len = len;
         // if(incl_len > snaplen) incl_len = snaplen; /* safty check that the packet isn't too big (I ran into
         // problems here) */
 
-        pcap_file.write((uint8_t *)&ts_sec, sizeof(ts_sec));
-        pcap_file.write((uint8_t *)&ts_usec, sizeof(ts_usec));
-        pcap_file.write((uint8_t *)&incl_len, sizeof(incl_len));
-        pcap_file.write((uint8_t *)&orig_len, sizeof(orig_len));
+        pcaprec_hdr_t hdr;
+        hdr.ts_sec = ts_sec;
+        hdr.ts_usec = ts_usec;
+        hdr.incl_len = len;
+        hdr.orig_len = len;
 
-        pcap_file.write(buf, incl_len);
+        pcap_file.write((const uint8_t *)&hdr, sizeof(pcaprec_hdr_t));
+        pcap_file.write(buf, hdr.incl_len);
     }
 }
 

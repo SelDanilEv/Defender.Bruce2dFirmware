@@ -16,6 +16,7 @@
 #include "core/wifi/wifi_common.h"
 #include "lwip/pbuf.h"
 #include "lwipopts.h"
+#include "modules/ethernet/eth_arp_utils.h"
 #include <globals.h>
 #include <iomanip>
 #include <iostream>
@@ -131,9 +132,7 @@ void DHCPStarvation::change_mac_in_packet() {
     memcpy(ethernet_frame + 70, mac, MAC_ADDRESS_LENGTH);
 }
 
-void DHCPStarvation::randomize_mac() {
-    for (int i = 0; i < 6; i++) { mac[i] = random() % 256; }
-}
+void DHCPStarvation::randomize_mac() { ::randomizeMac(mac); }
 
 void DHCPStarvation::setup() {
     netif = netif_list;

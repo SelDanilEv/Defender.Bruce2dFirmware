@@ -17,6 +17,7 @@
 #include "core/wifi/wifi_common.h"
 #include "lwip/pbuf.h"
 #include "lwipopts.h"
+#include "modules/ethernet/eth_arp_utils.h"
 #include <globals.h>
 #include <iomanip>
 #include <iostream>
@@ -130,9 +131,7 @@ void MACFlooding::change_mac_in_packet() {
     memcpy(ethernet_frame + MAC_ADDRESS_LENGTH, mac, MAC_ADDRESS_LENGTH * sizeof(uint8_t));
 }
 
-void MACFlooding::randomize_mac(uint8_t *mac) {
-    for (int i = 0; i < 6; i++) { mac[i] = random() % 256; }
-}
+void MACFlooding::randomize_mac(uint8_t *mac) { ::randomizeMac(mac); }
 
 void MACFlooding::setup() {
     randomSeed(millis());

@@ -309,23 +309,6 @@ bool checkShortcutPress() {
 }
 
 /*********************************************************************
-** Function: checkNumberShortcutPress
-** location: mykeyboard.cpp
-** return the pressed number
-**********************************************************************/
-int checkNumberShortcutPress() {
-    // shortctus to quickly select options
-    keyStroke key = _getKeyPress();
-    for (auto i : key.word) {
-        char c;
-        for (c = '1'; c <= '9'; c++)
-            if (i == c) return (c - '1');
-    }
-    // else
-    return -1;
-}
-
-/*********************************************************************
 ** Function: checkLetterShortcutPress
 ** location: mykeyboard.cpp
 ** return the pressed letter
@@ -714,20 +697,20 @@ String generalKeyboard(
                 if (current_text.length() >
                     max_FP_size) { // if its still too long, we divide it into two lines
                     tft.drawString(
-                        (mask_input ? repeatString(current_text.substring(0, max_FP_size).length(), "*")
+                        (mask_input ? repeatString(current_text.substring(0, max_FP_size).length(), '*')
                                     : current_text.substring(0, max_FP_size)),
                         5,
                         textbox_text_y
                     );
                     tft.drawString(
-                        (mask_input ? repeatString(current_text.length() - max_FP_size, "*")
+                        (mask_input ? repeatString(current_text.length() - max_FP_size, '*')
                                     : current_text.substring(max_FP_size, current_text.length())),
                         5,
                         textbox_text_y + LH * FP
                     );
                 } else {
                     tft.drawString(
-                        (mask_input ? repeatString(current_text.length(), "*") : current_text),
+                        (mask_input ? repeatString(current_text.length(), '*') : current_text),
                         5,
                         textbox_text_y
                     );
@@ -735,7 +718,7 @@ String generalKeyboard(
             } else {
                 // else if it fits, just draw the text
                 tft.drawString(
-                    (mask_input ? repeatString(current_text.length(), "*") : current_text), 5, textbox_text_y
+                    (mask_input ? repeatString(current_text.length(), '*') : current_text), 5, textbox_text_y
                 );
             }
             // Draw the textbox border again(?)

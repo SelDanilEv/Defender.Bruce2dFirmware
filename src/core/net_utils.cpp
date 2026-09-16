@@ -71,7 +71,9 @@ void stringToMAC(const std::string &macStr, uint8_t MAC[6]) {
 
 // Função para converter IP para string
 String ipToString(const uint8_t *ip) {
-    return String(ip[0]) + "." + String(ip[1]) + "." + String(ip[2]) + "." + String(ip[3]);
+    char buf[16];
+    snprintf(buf, sizeof(buf), "%u.%u.%u.%u", ip[0], ip[1], ip[2], ip[3]);
+    return String(buf);
 }
 
 // Função para converter MAC para string

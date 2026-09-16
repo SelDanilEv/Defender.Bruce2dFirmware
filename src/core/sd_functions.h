@@ -34,8 +34,6 @@ bool pasteFile(FS fs, String path);
 
 bool createFolder(FS fs, String path);
 
-bool folderExists(FS fs, String path);
-
 String readLineFromFile(File myFile);
 
 String readSmallFile(FS &fs, const String &filepath);

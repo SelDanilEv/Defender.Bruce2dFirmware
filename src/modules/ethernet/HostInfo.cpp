@@ -77,7 +77,7 @@ void HostInfo::setup(const Host &host) {
     const int TIMEOUT_MS = 150; // Timeout for connection attempt
 
     // Array of TCP ports to scan
-    const int portNumbers[] = {
+    static constexpr uint16_t portNumbers[] = {
         19, 20, 21, 22, 23, 25, 42, 53, 67, 68, 69, 80, 88,
         110, 111, 113, 119, 123, 135, 137, 139, 143, 161, 162,
         179, 194, 389, 427, 443, 445, 464, 465, 500, 514, 515,
