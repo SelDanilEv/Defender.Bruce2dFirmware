@@ -1,5 +1,6 @@
 #include "rf_scan.h"
 #include "core/led_control.h"
+#include "core/mykeyboard.h"
 #include "core/sd_functions.h"
 #include "core/type_convertion.h"
 #include "protocols/rf_config.h"   // RF_DBG
@@ -725,6 +726,16 @@ bool rfSaveSignal(float frequency, RfCodes codes, bool raw, char *key, bool auto
         subfile_out += "Protocol: RAW\n";
         subfile_out += "RAW_Data: " + codes.data;
         filename = "raw.sub";
+    }
+
+    if (!autoSave) {
+        String base = filename.substring(0, filename.lastIndexOf(".sub"));
+        String custom = keyboard(base, 30, "File name:");
+        custom.trim();
+        if (custom != "") {
+            if (custom.endsWith(".sub")) custom.remove(custom.length() - 4);
+            filename = custom + ".sub";
+        }
     }
 
     String filepath = "/BruceRF";

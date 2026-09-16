@@ -29,6 +29,15 @@ bool wifiConnectMenu(wifi_mode_t = WIFI_MODE_STA);
 bool wifiConnecttoKnownNet(void);
 
 /**
+ * @brief Scans the networks and shows a menu to pick one
+ * @param ssid set to the chosen network's SSID on success
+ * @param encryption set to the chosen network's encryption type on success (8 for hidden SSID)
+ * @note Re-scans when Esc is pressed with nothing selected
+ * @note returns false if the user cancels or backs out to the main menu
+ */
+bool selectWifiNetwork(String &ssid, int &encryption);
+
+/**
  * @brief returns MAC adress
  */
 String checkMAC();
@@ -58,6 +67,11 @@ void wifiConnectTask(void *pvParameters);
  * @brief Ensures esp_netif and the default event loop are initialized (idempotent)
  */
 void ensureWifiPlatform();
+
+/**
+ * @brief Read-only check of whether wifi_common is mid-transition (connecting/disconnecting)
+ */
+bool isWifiTransitioning();
 
 // private
 /**

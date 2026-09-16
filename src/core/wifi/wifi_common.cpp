@@ -16,6 +16,8 @@
 static TaskHandle_t timezoneTaskHandle = NULL;
 static bool wifiTransitioning = false;
 
+bool isWifiTransitioning() { return wifiTransitioning; }
+
 esp_err_t wifiRawTx(wifi_interface_t ifx, const void *frame, int len, uint8_t retries) {
     esp_err_t err = esp_wifi_80211_tx(ifx, frame, len, false);
     for (uint8_t i = 0; err == ESP_ERR_NO_MEM && i < retries; i++) {
@@ -170,6 +172,79 @@ void wifiDisconnect() {
     wifiTransitioning = false;
 }
 
+bool selectWifiNetwork(String &ssid, int &encryption) {
+    WiFi.mode(WIFI_MODE_STA);
+    applyConfiguredMAC();
+
+    bool refresh_scan = false;
+    do {
+        displayTextLine("Scanning..");
+        int nets = WiFi.scanNetworks();
+
+        String selSsid = "";
+        int selEnc = 0;
+        bool selHidden = false;
+
+        options = {};
+        for (int i = 0; i < nets; i++) {
+            if (options.size() < 250) {
+                String netSsid = WiFi.SSID(i);
+                int encryptionType = WiFi.encryptionType(i);
+                int32_t rssi = WiFi.RSSI(i);
+                int32_t ch = WiFi.channel(i);
+                // Check if the network is secured
+                String encryptionPrefix = (encryptionType == WIFI_AUTH_OPEN) ? "" : "#";
+                String encryptionTypeStr;
+                switch (encryptionType) {
+                    case WIFI_AUTH_OPEN: encryptionTypeStr = "Open"; break;
+                    case WIFI_AUTH_WEP: encryptionTypeStr = "WEP"; break;
+                    case WIFI_AUTH_WPA_PSK: encryptionTypeStr = "WPA/PSK"; break;
+                    case WIFI_AUTH_WPA2_PSK: encryptionTypeStr = "WPA2/PSK"; break;
+                    case WIFI_AUTH_WPA_WPA2_PSK: encryptionTypeStr = "WPA/WPA2/PSK"; break;
+                    case WIFI_AUTH_WPA2_ENTERPRISE: encryptionTypeStr = "WPA2/Enterprise"; break;
+                    case WIFI_AUTH_WPA3_PSK: encryptionTypeStr = "WPA3/PSK"; break;
+                    case WIFI_AUTH_WPA2_WPA3_PSK: encryptionTypeStr = "WPA2/WPA3/PSK"; break;
+                    default: encryptionTypeStr = "Unknown"; break;
+                }
+
+                String optionText = encryptionPrefix + netSsid + "(" + String(rssi) + "|" +
+                                    encryptionTypeStr + "|ch." + String(ch) + ")";
+
+                options.push_back({optionText.c_str(), [&selSsid, &selEnc, netSsid, encryptionType]() {
+                                       selSsid = netSsid;
+                                       selEnc = encryptionType;
+                                   }});
+            }
+        }
+        WiFi.scanDelete();
+        options.push_back({"Hidden SSID", [&selHidden]() { selHidden = true; }});
+        addOptionToMainMenu();
+
+        loopOptions(options);
+        options.clear();
+
+        if (returnToMenu) {
+            return false;
+        } else if (selHidden) {
+            String __ssid = keyboard("", 32, "Your SSID");
+            if (__ssid == "\x1B") return false;
+            ssid = __ssid;
+            encryption = 8;
+            return true;
+        } else if (selSsid != "") {
+            ssid = selSsid;
+            encryption = selEnc;
+            return true;
+        } else if (check(EscPress)) {
+            refresh_scan = true;
+        } else {
+            refresh_scan = false;
+        }
+    } while (refresh_scan);
+
+    return false;
+}
+
 bool wifiConnectMenu(wifi_mode_t mode) {
     if (WiFi.isConnected()) return false; // safeguard
 
@@ -192,78 +267,14 @@ bool wifiConnectMenu(wifi_mode_t mode) {
             break;
 
         case WIFI_STA: { // station mode
-            int nets;
             if (!radioHasMemForWifi()) {
                 displayError("Low RAM: free BLE/SD first", true);
                 return false;
             }
-            WiFi.mode(WIFI_MODE_STA);
 
-            // wifiMACMenu();
-            applyConfiguredMAC();
-
-            bool refresh_scan = false;
-            do {
-                displayTextLine("Scanning..");
-                nets = WiFi.scanNetworks();
-
-                String selSsid = "";
-                int selEnc = 0;
-                bool selHidden = false;
-
-                options = {};
-                for (int i = 0; i < nets; i++) {
-                    if (options.size() < 250) {
-                        String ssid = WiFi.SSID(i);
-                        int encryptionType = WiFi.encryptionType(i);
-                        int32_t rssi = WiFi.RSSI(i);
-                        int32_t ch = WiFi.channel(i);
-                        // Check if the network is secured
-                        String encryptionPrefix = (encryptionType == WIFI_AUTH_OPEN) ? "" : "#";
-                        String encryptionTypeStr;
-                        switch (encryptionType) {
-                            case WIFI_AUTH_OPEN: encryptionTypeStr = "Open"; break;
-                            case WIFI_AUTH_WEP: encryptionTypeStr = "WEP"; break;
-                            case WIFI_AUTH_WPA_PSK: encryptionTypeStr = "WPA/PSK"; break;
-                            case WIFI_AUTH_WPA2_PSK: encryptionTypeStr = "WPA2/PSK"; break;
-                            case WIFI_AUTH_WPA_WPA2_PSK: encryptionTypeStr = "WPA/WPA2/PSK"; break;
-                            case WIFI_AUTH_WPA2_ENTERPRISE: encryptionTypeStr = "WPA2/Enterprise"; break;
-                            case WIFI_AUTH_WPA3_PSK: encryptionTypeStr = "WPA3/PSK"; break;
-                            case WIFI_AUTH_WPA2_WPA3_PSK: encryptionTypeStr = "WPA2/WPA3/PSK"; break;
-                            default: encryptionTypeStr = "Unknown"; break;
-                        }
-
-                        String optionText = encryptionPrefix + ssid + "(" + String(rssi) + "|" +
-                                            encryptionTypeStr + "|ch." + String(ch) + ")";
-
-                        options.push_back({optionText.c_str(), [&selSsid, &selEnc, ssid, encryptionType]() {
-                                               selSsid = ssid;
-                                               selEnc = encryptionType;
-                                           }});
-                    }
-                }
-                WiFi.scanDelete();
-                options.push_back({"Hidden SSID", [&selHidden]() { selHidden = true; }});
-                addOptionToMainMenu();
-
-                loopOptions(options);
-                options.clear();
-
-                if (returnToMenu) {
-                    refresh_scan = false;
-                } else if (selHidden) {
-                    String __ssid = keyboard("", 32, "Your SSID");
-                    if (__ssid != "\x1B") _wifiConnect(__ssid.c_str(), 8);
-                    refresh_scan = false;
-                } else if (selSsid != "") {
-                    _wifiConnect(selSsid, selEnc);
-                    refresh_scan = false;
-                } else if (check(EscPress)) {
-                    refresh_scan = true;
-                } else {
-                    refresh_scan = false;
-                }
-            } while (refresh_scan);
+            String ssid;
+            int encryption;
+            if (selectWifiNetwork(ssid, encryption)) { _wifiConnect(ssid, encryption); }
         } break;
 
         case WIFI_AP_STA: // repeater mode

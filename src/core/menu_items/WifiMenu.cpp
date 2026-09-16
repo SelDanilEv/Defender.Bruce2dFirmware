@@ -16,6 +16,9 @@
 #include "modules/wifi/scan_hosts.h"
 #include "modules/wifi/sniffer.h"
 #include "modules/wifi/wifi_atks.h"
+#if defined(T_EMBED_1101)
+#include "modules/wifi/wifi_repeater.h"
+#endif
 
 #ifndef LITE_VERSION
 #include "modules/pwnagotchi/pwnagotchi.h"
@@ -55,6 +58,9 @@ void WifiMenu::optionsMenu() {
              }},
         };
     }
+#if defined(T_EMBED_1101)
+    options.push_back({"WiFi Repeater", wifiRepeater});
+#endif
     if (WiFi.getMode() != WIFI_MODE_NULL) { options.push_back({"Turn Off WiFi", wifiDisconnect}); }
     if (WiFi.getMode() & WIFI_MODE_STA && WiFi.isConnected()) {
         options.push_back({"AP info", displayAPInfo});

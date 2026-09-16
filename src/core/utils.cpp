@@ -159,7 +159,8 @@ void updateTimeStr(struct tm timeInfo) {
 void showDeviceInfo() {
     ScrollableTextArea area = ScrollableTextArea("DEVICE INFO");
 
-    area.addLine("Bruce Version: " + String(BRUCE_VERSION));
+    area.addLine("Firmware: Bruce-2D (custom fork)");
+    area.addLine("Bruce base: " + String(BRUCE_VERSION));
     area.addLine("EEPROM size: " + String(EEPROMSIZE));
     area.addLine("");
     area.addLine("[MEMORY]");

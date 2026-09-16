@@ -54,6 +54,7 @@ Also, [read our FAQ](https://wiki.bruce.computer/faq/)
 
 - [x] Connect to WiFi
 - [x] WiFi AP
+- [x] WiFi Repeater (T-Embed CC1101 only, random persisted AP password and DNS shown on-screen; rotate the encoder while running to change the AP name/password or stop the repeater; Back leaves the status screen without stopping it)
 - [x] Disconnect WiFi
 - [x] [WiFi Atks](https://wiki.bruce.computer/features/wifi/#wifi-atks)
   - [x] [Beacon Spam](https://wiki.bruce.computer/features/wifi/#beacon-spam)

@@ -60,7 +60,10 @@ void sendCustomRF() {
 
         if (!readSubFile(filesystem, filepath, data)) continue;
 
-        if (data.protocol == "RcSwitch") {
+        // KeeLoq (serial set) is a rolling code: replaying the stored Key sends a
+        // stale counter the gate rejects. Route it into loopEmulate so each press
+        // re-encrypts a fresh forward code and advances the counter.
+        if (data.protocol == "RcSwitch" || data.serial != 0) {
             loopEmulate(data);
         } else {
             txSubFile(data);

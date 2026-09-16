@@ -2,6 +2,8 @@
 #include "mifare_keys_manager.h"
 #include "sd_functions.h"
 #include <algorithm>
+#include <esp_mac.h>
+#include <esp_random.h>
 
 JsonDocument BruceConfig::toJson() const {
     JsonDocument jsonDoc;
@@ -43,6 +45,9 @@ JsonDocument BruceConfig::toJson() const {
     JsonObject _wifiAp = setting["wifiAp"].to<JsonObject>();
     _wifiAp["ssid"] = wifiAp.ssid;
     _wifiAp["pwd"] = wifiAp.pwd;
+    JsonObject _repeaterAp = setting["repeaterAp"].to<JsonObject>();
+    _repeaterAp["ssid"] = repeaterAp.ssid;
+    _repeaterAp["pwd"] = repeaterAp.pwd;
     setting["wifiMAC"] = wifiMAC; //@IncursioHack
     setting["TerminalLog"] = TerminalLog;
 
@@ -280,6 +285,15 @@ void BruceConfig::fromFile(bool checkFS) {
         JsonObject wifiApObj = setting["wifiAp"].as<JsonObject>();
         wifiAp.ssid = wifiApObj["ssid"].as<String>();
         wifiAp.pwd = wifiApObj["pwd"].as<String>();
+    } else {
+        count++;
+        log_e("Fail");
+    }
+
+    if (!setting["repeaterAp"].isNull()) {
+        JsonObject repeaterApObj = setting["repeaterAp"].as<JsonObject>();
+        repeaterAp.ssid = repeaterApObj["ssid"].as<String>();
+        repeaterAp.pwd = repeaterApObj["pwd"].as<String>();
     } else {
         count++;
         log_e("Fail");
@@ -648,6 +662,35 @@ void BruceConfig::setWifiApCreds(const String &ssid, const String &pwd) {
     wifiAp.ssid = ssid;
     wifiAp.pwd = pwd;
     saveFile();
+}
+
+void BruceConfig::ensureRepeaterApCredentials() {
+    // Excludes 0/O, 1/l/I: characters that are easily confused when a password is read off a screen.
+    static const char kPasswordCharset[] = "23456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz";
+    static const size_t kPasswordCharsetSize = sizeof(kPasswordCharset) - 1;
+    static const int kPasswordLength = 12;
+
+    bool changed = false;
+
+    if (repeaterAp.ssid.isEmpty()) {
+        uint8_t mac[6];
+        esp_read_mac(mac, ESP_MAC_WIFI_STA);
+        char suffix[5];
+        snprintf(suffix, sizeof(suffix), "%02X%02X", mac[4], mac[5]);
+        repeaterAp.ssid = "Defender-RPT-" + String(suffix);
+        changed = true;
+    }
+
+    if (repeaterAp.pwd.isEmpty()) {
+        String pwd;
+        for (int i = 0; i < kPasswordLength; i++) {
+            pwd += kPasswordCharset[esp_random() % kPasswordCharsetSize];
+        }
+        repeaterAp.pwd = pwd;
+        changed = true;
+    }
+
+    if (changed) saveFile();
 }
 
 void BruceConfig::setTerminalLog(bool value) {

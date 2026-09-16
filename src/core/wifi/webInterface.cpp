@@ -471,7 +471,7 @@ void configureWebServer() {
                 "{\"%s\":\"%s\",\"SD\":{\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\"},"
                 "\"LittleFS\":{\"%s\":\"%s\",\"%s\":\"%s\",\"%s\":\"%s\"}}",
                 "BRUCE_VERSION",
-                BRUCE_VERSION,
+                "Bruce-2D fork (" BRUCE_VERSION ")",
                 "free",
                 humanReadableSize(SDTotalBytes - SDUsedBytes).c_str(),
                 "used",
