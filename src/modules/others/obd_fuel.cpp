@@ -13,7 +13,10 @@ static const char *DEFAULT_OBD_HOST = "192.168.0.10";
 static const uint16_t DEFAULT_OBD_PORT = 35000;
 static const float DEFAULT_CONSUMPTION_L_PER_100 = 8.0f;
 static const unsigned long OBD_QUERY_DEADLINE_MS = 1000;
-static const unsigned long OBD_POLL_INTERVAL_MS = 100;
+// Fuel level changes slowly, so the tank is only polled once per minute. Between
+// polls the loop stays free to react to input, which keeps the UI responsive.
+static const unsigned long OBD_REFRESH_INTERVAL_MS = 60000;
+static const unsigned long OBD_INPUT_POLL_MS = 20;
 
 namespace {
 
@@ -77,16 +80,30 @@ void obd_fuel_setup() {
         return;
     }
 
-    sendAndDrain(client, "ATZ");
-    sendAndDrain(client, "ATE0");
-    sendAndDrain(client, "ATSP0");
+    auto initAdapter = [&]() {
+        sendAndDrain(client, "ATZ");
+        sendAndDrain(client, "ATE0");
+        sendAndDrain(client, "ATSP0");
+    };
+    initAdapter();
 
     float tankL = 50.0f;
     float lPer100 = DEFAULT_CONSUMPTION_L_PER_100;
     float defaultLPer100 = DEFAULT_CONSUMPTION_L_PER_100;
     bool forceDefault = false;
     bool exitToMain = false;
-    unsigned long lastQueryMs = 0;
+
+    // Last known-good tank level. Kept across reads so a single bad/split reply
+    // does not wipe the value already shown; only a fresh valid reading updates it.
+    bool haveLevel = false;
+    float lastPercent = 0.0f;
+    float lastLiters = 0.0f;
+    unsigned long lastLevelUpdateMs = 0;
+    ConsumptionSource lastSource = SRC_DEF;
+
+    // Health of the adapter link, independent of whether PID 012F has data.
+    bool everQueried = false;
+    bool adapterResponding = false;
 
     auto openTankMenu = [&]() {
         options = {
@@ -110,26 +127,24 @@ void obd_fuel_setup() {
         loopOptions(options, MENU_TYPE_SUBMENU, "OBD Fuel");
     };
 
-    while (!exitToMain && !check(EscPress)) {
-        if (lastQueryMs != 0 && millis() - lastQueryMs < OBD_QUERY_DEADLINE_MS) {
-            if (check(NextPress) || check(PrevPress)) {
-                openTankMenu();
-                continue;
+    auto doRefresh = [&]() {
+        everQueried = true;
+
+        if (!client.connected()) {
+            client.stop();
+            if (!client.connect(obdHost.c_str(), obdPort)) {
+                adapterResponding = false;
+                return;
             }
-            delay(OBD_POLL_INTERVAL_MS);
-            continue;
+            initAdapter();
         }
-        lastQueryMs = millis();
 
         String reply = stripFrameChars(sendAndDrain(client, "012F"));
-
-        bool supported = !isPidUnsupported(reply);
+        // The adapter is healthy if it answered at all, even with NO DATA for this PID.
+        adapterResponding = reply.length() > 0;
 
         int pidIndex = reply.indexOf("412F");
-        if (pidIndex == -1) supported = false;
-
-        float percent = 0.0f;
-        float liters = 0.0f;
+        bool levelValid = !isPidUnsupported(reply) && pidIndex != -1;
 
         // Speed (010D -> 410D, 1 data byte, km/h) gates instantaneous consumption below.
         String speedReply = stripFrameChars(sendAndDrain(client, "010D"));
@@ -177,34 +192,69 @@ void obd_fuel_setup() {
             float inst = fuelRateLh / speedKmh * 100.0f;
             if (inst >= 0.0f && inst <= 60.0f) lPer100 = 0.8f * lPer100 + 0.2f * inst;
         }
-        const char *srcTag = source == SRC_FR ? "FR" : source == SRC_MAF ? "MAF" : "def";
-        if (forceDefault) srcTag = "def";
+        lastSource = source;
 
-        float rangeKm = 0.0f;
-        if (supported) {
+        if (levelValid) {
             String byteHex = reply.substring(pidIndex + 4, pidIndex + 6);
             long a = strtol(byteHex.c_str(), nullptr, 16);
-            percent = a * 100.0f / 255.0f;
-            liters = percent / 100.0f * tankL;
-            rangeKm = liters / (lPer100 / 100.0f);
+            lastPercent = a * 100.0f / 255.0f;
+            lastLiters = lastPercent / 100.0f * tankL;
+            lastLevelUpdateMs = millis();
+            haveLevel = true;
         }
+    };
+
+    auto draw = [&]() {
+        String health = !everQueried ? "[...]" : (adapterResponding ? "[OK]" : "[NO RESP]");
+        const char *srcTag = lastSource == SRC_FR ? "FR" : lastSource == SRC_MAF ? "MAF" : "def";
+        if (forceDefault) srcTag = "def";
 
         drawMainBorder();
-        printSubtitle("OBD Fuel");
-        if (supported) {
-            padprintln("Level: " + String((int)percent) + "%");
-            padprintln("Fuel: " + String(liters, 1) + " L");
+        printSubtitle("OBD Fuel " + health);
+        if (haveLevel) {
+            float missing = tankL - lastLiters;
+            if (missing < 0.0f) missing = 0.0f;
+            float rangeKm = lastLiters / (lPer100 / 100.0f);
+            unsigned long agoS = (millis() - lastLevelUpdateMs) / 1000;
+            padprintln("Level: " + String((int)lastPercent) + "%");
+            padprintln("Fuel: " + String(lastLiters, 1) + " L");
+            padprintln("Missing: " + String(missing, 1) + " L");
             padprintln("Range: " + String((int)rangeKm) + " km");
+            padprintln("Updated: " + String(agoS) + "s ago");
         } else {
-            padprintln("PID 012F not supported");
+            padprintln("Level: --");
+            padprintln("Updated: never");
         }
         padprintln("Cons: " + String(lPer100, 1) + " L/100km (" + srcTag + ")");
         padprintln("[scroll] menu  [Esc] exit");
+    };
 
+    doRefresh();
+    unsigned long lastRefreshMs = millis();
+    draw();
+    unsigned long lastDrawMs = millis();
+
+    while (!exitToMain && !check(EscPress)) {
         if (check(NextPress) || check(PrevPress)) {
             openTankMenu();
+            draw();
+            lastDrawMs = millis();
             continue;
         }
+
+        unsigned long now = millis();
+        if (now - lastRefreshMs >= OBD_REFRESH_INTERVAL_MS) {
+            doRefresh();
+            lastRefreshMs = millis();
+            draw();
+            lastDrawMs = millis();
+        } else if (now - lastDrawMs >= 1000) {
+            // Redraw once a second so the "Updated Ns ago" counter keeps ticking.
+            draw();
+            lastDrawMs = millis();
+        }
+
+        delay(OBD_INPUT_POLL_MS);
     }
 
     client.stop();
