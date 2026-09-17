@@ -7,6 +7,7 @@
 #include "modules/others/clicker.h"
 #include "modules/others/ibutton.h"
 #include "modules/others/mic.h"
+#include "modules/others/obd_fuel.h"
 #include "modules/others/qrcode_menu.h"
 #include "modules/others/tururururu.h"
 #include "modules/others/u2f.h"
@@ -28,6 +29,7 @@ void OthersMenu::optionsMenu() {
 
 #ifndef LITE_VERSION
         {"iButton",      setup_ibutton                },
+        {"OBD Fuel",     obd_fuel_setup               },
 #endif
 
         // Timer removed - moved to another "Clock"
