@@ -16,6 +16,8 @@ static const unsigned long OBD_QUERY_DEADLINE_MS = 1000;
 // Fuel level changes slowly, so the tank is only polled once per minute. Between
 // polls the loop stays free to react to input, which keeps the UI responsive.
 static const unsigned long OBD_REFRESH_INTERVAL_MS = 60000;
+// Engine load, throttle and battery voltage change quickly, so they get their own faster poll.
+static const unsigned long OBD_LIVE_REFRESH_INTERVAL_MS = 3000;
 static const unsigned long OBD_INPUT_POLL_MS = 20;
 
 namespace {
@@ -59,6 +61,33 @@ bool isPidUnsupported(const String &reply) {
 
 enum ConsumptionSource { SRC_FR, SRC_MAF, SRC_DEF };
 
+// Shared shape for the 1-data-byte, A*100/255 percent PIDs (engine load 0104, throttle 0111).
+// rawReplyOut is the stripped reply so callers can tell an empty (no answer) reply from an
+// unsupported-PID one, without querying twice.
+bool queryPercentPid(
+    WiFiClient &client, const String &cmd, const String &replyTag, float &outPercent, String &rawReplyOut
+) {
+    rawReplyOut = stripFrameChars(sendAndDrain(client, cmd));
+    int idx = rawReplyOut.indexOf(replyTag);
+    if (isPidUnsupported(rawReplyOut) || idx == -1) return false;
+    String byteHex = rawReplyOut.substring(idx + replyTag.length(), idx + replyTag.length() + 2);
+    outPercent = strtol(byteHex.c_str(), nullptr, 16) * 100.0f / 255.0f;
+    return true;
+}
+
+// ATRV replies with the raw voltage text (e.g. "12.6V") before the '>' prompt.
+bool parseBatteryVoltage(const String &reply, float &outVolts) {
+    int vIdx = reply.indexOf('V');
+    if (vIdx <= 0) return false;
+    int start = vIdx;
+    while (start > 0 && (isDigit(reply[start - 1]) || reply[start - 1] == '.')) start--;
+    if (start == vIdx) return false;
+    float v = reply.substring(start, vIdx).toFloat();
+    if (v < 5.0f || v > 20.0f) return false;
+    outVolts = v;
+    return true;
+}
+
 } // namespace
 
 void obd_fuel_setup() {
@@ -101,9 +130,29 @@ void obd_fuel_setup() {
     unsigned long lastLevelUpdateMs = 0;
     ConsumptionSource lastSource = SRC_DEF;
 
+    // Last known-good live readings. Same keep-last-good pattern as haveLevel/lastPercent:
+    // a bad/NO DATA reply for one value never clears the others.
+    bool haveLoad = false;
+    float lastLoad = 0.0f;
+    bool haveThrottle = false;
+    float lastThrottle = 0.0f;
+    bool haveBatt = false;
+    float lastBatt = 0.0f;
+
     // Health of the adapter link, independent of whether PID 012F has data.
     bool everQueried = false;
     bool adapterResponding = false;
+
+    auto ensureConnected = [&]() -> bool {
+        if (client.connected()) return true;
+        client.stop();
+        if (!client.connect(obdHost.c_str(), obdPort)) {
+            adapterResponding = false;
+            return false;
+        }
+        initAdapter();
+        return true;
+    };
 
     auto openTankMenu = [&]() {
         options = {
@@ -130,14 +179,7 @@ void obd_fuel_setup() {
     auto doRefresh = [&]() {
         everQueried = true;
 
-        if (!client.connected()) {
-            client.stop();
-            if (!client.connect(obdHost.c_str(), obdPort)) {
-                adapterResponding = false;
-                return;
-            }
-            initAdapter();
-        }
+        if (!ensureConnected()) return;
 
         String reply = stripFrameChars(sendAndDrain(client, "012F"));
         // The adapter is healthy if it answered at all, even with NO DATA for this PID.
@@ -204,33 +246,65 @@ void obd_fuel_setup() {
         }
     };
 
+    auto doLiveRefresh = [&]() {
+        if (!ensureConnected()) return;
+
+        String rawReply;
+        float pct;
+        if (queryPercentPid(client, "0104", "4104", pct, rawReply)) {
+            lastLoad = pct;
+            haveLoad = true;
+        }
+        // The adapter is healthy if it answered at all, even with NO DATA for this PID.
+        adapterResponding = rawReply.length() > 0;
+
+        if (queryPercentPid(client, "0111", "4111", pct, rawReply)) {
+            lastThrottle = pct;
+            haveThrottle = true;
+        }
+
+        String rvReply = sendAndDrain(client, "ATRV");
+        float volts;
+        if (parseBatteryVoltage(rvReply, volts)) {
+            lastBatt = volts;
+            haveBatt = true;
+        }
+    };
+
     auto draw = [&]() {
         String health = !everQueried ? "[...]" : (adapterResponding ? "[OK]" : "[NO RESP]");
         const char *srcTag = lastSource == SRC_FR ? "FR" : lastSource == SRC_MAF ? "MAF" : "def";
         if (forceDefault) srcTag = "def";
 
+        String subtitle = "OBD Fuel " + health;
+        if (haveLevel) subtitle += " " + String((millis() - lastLevelUpdateMs) / 1000) + "s ago";
+
         drawMainBorder();
-        printSubtitle("OBD Fuel " + health);
+        printSubtitle(subtitle);
         if (haveLevel) {
             float missing = tankL - lastLiters;
             if (missing < 0.0f) missing = 0.0f;
             float rangeKm = lastLiters / (lPer100 / 100.0f);
-            unsigned long agoS = (millis() - lastLevelUpdateMs) / 1000;
             padprintln("Level: " + String((int)lastPercent) + "%");
             padprintln("Fuel: " + String(lastLiters, 1) + " L");
             padprintln("Missing: " + String(missing, 1) + " L");
             padprintln("Range: " + String((int)rangeKm) + " km");
-            padprintln("Updated: " + String(agoS) + "s ago");
         } else {
             padprintln("Level: --");
-            padprintln("Updated: never");
         }
         padprintln("Cons: " + String(lPer100, 1) + " L/100km (" + srcTag + ")");
+        String loadStr = haveLoad ? String((int)lastLoad) + "%" : String("--");
+        String thrStr = haveThrottle ? String((int)lastThrottle) + "%" : String("--");
+        String battStr = haveBatt ? String(lastBatt, 1) + " V" : String("--");
+        padprintln("Load: " + loadStr + "  Thr: " + thrStr);
+        padprintln("Batt: " + battStr);
         padprintln("[scroll] menu  [Esc] exit");
     };
 
     doRefresh();
     unsigned long lastRefreshMs = millis();
+    doLiveRefresh();
+    unsigned long lastLiveRefreshMs = millis();
     draw();
     unsigned long lastDrawMs = millis();
 
@@ -248,8 +322,13 @@ void obd_fuel_setup() {
             lastRefreshMs = millis();
             draw();
             lastDrawMs = millis();
+        } else if (now - lastLiveRefreshMs >= OBD_LIVE_REFRESH_INTERVAL_MS) {
+            doLiveRefresh();
+            lastLiveRefreshMs = millis();
+            draw();
+            lastDrawMs = millis();
         } else if (now - lastDrawMs >= 1000) {
-            // Redraw once a second so the "Updated Ns ago" counter keeps ticking.
+            // Redraw once a second so the "Ns ago" counter in the subtitle keeps ticking.
             draw();
             lastDrawMs = millis();
         }
