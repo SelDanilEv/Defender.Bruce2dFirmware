@@ -177,7 +177,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Bruce-${{ matrix.board.env }}
-          path: Bruce-*.*
+          path: Bruce2D-*.bin
           retention-days: 1
           if-no-files-found: error
 
@@ -347,7 +347,7 @@ jobs:
           tag_name: ${{ steps.bruce_version.outputs.version }}
           generate_release_notes: true
           files: |
-            Bruce-*.bin
+            Bruce2D-*.bin
 
       - name: Close "Fixed on Beta" issues
         env:

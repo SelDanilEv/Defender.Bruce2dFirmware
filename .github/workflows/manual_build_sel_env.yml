@@ -151,7 +151,7 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Bruce-${{ env.SELECTED_ENV }}
-          path: Bruce-*.*
+          path: Bruce2D-*.bin
           retention-days: 1
           if-no-files-found: error
 
@@ -162,4 +162,4 @@ jobs:
           echo "Version: ${{ steps.prepare_version.outputs.VERSION }}"
           echo "Git Hash: $(git describe --always --dirty)"
           echo "Built files:"
-          ls -la Bruce-*.* 2>/dev/null || echo "No Bruce files found"
+          ls -la Bruce2D-*.bin 2>/dev/null || echo "No Bruce files found"

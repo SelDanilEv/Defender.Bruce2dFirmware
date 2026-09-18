@@ -143,6 +143,6 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: Bruce-${{ matrix.board.env }}
-          path: Bruce-*.bin
+          path: Bruce2D-*.bin
           retention-days: 5
           if-no-files-found: error
