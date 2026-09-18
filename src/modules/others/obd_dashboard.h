@@ -1,10 +1,10 @@
 #if !defined(LITE_VERSION)
-#ifndef __OBD_FUEL_H__
-#define __OBD_FUEL_H__
+#ifndef __OBD_DASHBOARD_H__
+#define __OBD_DASHBOARD_H__
 
 // Reads fuel tank level, engine load, throttle position and battery voltage over WiFi
 // from an ELM327-compatible OBD-II dongle.
-void obd_fuel_setup();
+void obd_dashboard_setup();
 
-#endif // __OBD_FUEL_H__
+#endif // __OBD_DASHBOARD_H__
 #endif // LITE_VERSION

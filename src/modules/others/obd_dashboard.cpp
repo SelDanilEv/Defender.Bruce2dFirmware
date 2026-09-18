@@ -1,5 +1,5 @@
 #if !defined(LITE_VERSION)
-#include "modules/others/obd_fuel.h"
+#include "modules/others/obd_dashboard.h"
 
 #include "core/display.h"
 #include "core/mykeyboard.h"
@@ -90,7 +90,7 @@ bool parseBatteryVoltage(const String &reply, float &outVolts) {
 
 } // namespace
 
-void obd_fuel_setup() {
+void obd_dashboard_setup() {
     if (!ensureWifiConnected("WiFi not connected")) return;
 
     String obdHost = num_keyboard(DEFAULT_OBD_HOST, 15, "OBD dongle IP:");
@@ -173,7 +173,7 @@ void obd_fuel_setup() {
             {"Back",                                                            []() {}                     },
             {"Main menu",                                                       [&]() { exitToMain = true; }},
         };
-        loopOptions(options, MENU_TYPE_SUBMENU, "OBD Fuel");
+        loopOptions(options, MENU_TYPE_SUBMENU, "OBD Dashboard");
     };
 
     auto doRefresh = [&]() {
@@ -276,7 +276,7 @@ void obd_fuel_setup() {
         const char *srcTag = lastSource == SRC_FR ? "FR" : lastSource == SRC_MAF ? "MAF" : "def";
         if (forceDefault) srcTag = "def";
 
-        String subtitle = "OBD Fuel " + health;
+        String subtitle = "OBD " + health;
         if (haveLevel) subtitle += " " + String((millis() - lastLevelUpdateMs) / 1000) + "s ago";
 
         drawMainBorder();
