@@ -1,5 +1,6 @@
 #ifndef __FM_MENU_H__
 #define __FM_MENU_H__
+#if !defined(DISABLE_FM)
 
 #include <MenuItemInterface.h>
 
@@ -13,4 +14,5 @@ public:
     const String& themePath() override { return bruceConfig.theme.paths.fm; }
 };
 
+#endif // DISABLE_FM
 #endif

@@ -26,8 +26,12 @@ public:
     ClockMenu clockMenu;
     ConnectMenu connectMenu;
     ConfigMenu configMenu;
+#if !defined(DISABLE_FM)
     FMMenu fmMenu;
+#endif
+#if !defined(DISABLE_GPS)
     GpsMenu gpsMenu;
+#endif
     IRMenu irMenu;
     NRF24Menu nrf24Menu;
     OthersMenu othersMenu;
@@ -35,8 +39,10 @@ public:
     RFMenu rfMenu;
     ScriptsMenu scriptsMenu;
     WifiMenu wifiMenu;
-#if !defined(LITE_VERSION)
+#if !defined(LITE_VERSION) && !defined(DISABLE_LORA)
     LoRaMenu loraMenu;
+#endif
+#if !defined(LITE_VERSION) && !defined(DISABLE_ETHERNET)
     EthernetMenu ethernetMenu;
 #endif
 

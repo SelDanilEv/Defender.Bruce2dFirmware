@@ -1,4 +1,4 @@
-#if !defined(LITE_VERSION)
+#if !defined(LITE_VERSION) && !defined(DISABLE_LORA)
 #include "LoRaMenu.h"
 #include "core/display.h"
 #include "core/utils.h"

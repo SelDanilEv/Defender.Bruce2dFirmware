@@ -1,5 +1,6 @@
 #ifndef __GPS_MENU_H__
 #define __GPS_MENU_H__
+#if !defined(DISABLE_GPS)
 
 #include <MenuItemInterface.h>
 
@@ -17,4 +18,5 @@ private:
     void configMenu(void);
 };
 
+#endif // DISABLE_GPS
 #endif

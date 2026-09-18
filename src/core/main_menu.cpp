@@ -9,17 +9,19 @@ MainMenu::MainMenu() {
         &bleMenu,
         &rfMenu,
         &nrf24Menu,
-#if !defined(LITE_VERSION)
+#if !defined(LITE_VERSION) && !defined(DISABLE_LORA)
         &loraMenu,
 #endif
-#if defined(FM_SI4713) && !defined(LITE_VERSION)
+#if defined(FM_SI4713) && !defined(LITE_VERSION) && !defined(DISABLE_FM)
         &fmMenu,
 #endif
         &irMenu,
-#if !defined(LITE_VERSION)
+#if !defined(LITE_VERSION) && !defined(DISABLE_ETHERNET)
         &ethernetMenu,
 #endif
+#if !defined(DISABLE_GPS)
         &gpsMenu,
+#endif
         &rfidMenu,
         &fileMenu,
 #if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)

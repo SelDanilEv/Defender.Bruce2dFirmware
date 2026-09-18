@@ -6,7 +6,9 @@
 #include "core/wifi/wg.h"
 #include "core/wifi/wifi_common.h"
 #include "core/wifi/wifi_mac.h"
+#if !defined(DISABLE_ETHERNET)
 #include "modules/ethernet/ARPScanner.h"
+#endif
 #include "modules/wifi/ap_info.h"
 #include "modules/wifi/clients.h"
 #include "modules/wifi/evil_portal.h"
@@ -81,20 +83,14 @@ void WifiMenu::optionsMenu() {
     options.push_back({"Sniffer", sniffer_setup});
     options.push_back({"Channel Analyzer", channel_analyzer_setup});
     options.push_back({"Jam Detect", jam_detect_setup});
+#if !defined(DISABLE_ETHERNET)
     options.push_back({"Scan Hosts", [=]() {
                            bool doScan = true;
                            if (!WiFi.isConnected()) doScan = wifiConnectMenu();
 
-                           if (doScan) {
-                               esp_netif_t *esp_netinterface =
-                                   esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
-                               if (esp_netinterface == nullptr) {
-                                   Serial.println("Failed to get netif handle");
-                                   return;
-                               }
-                               ARPScanner{esp_netinterface};
-                           }
+                           if (doScan) { scanLocalHosts(); }
                        }});
+#endif
     options.push_back({"Wireguard", wg_setup});
     options.push_back({"Responder", responder});
     options.push_back({"Brucegotchi", brucegotchi_start});

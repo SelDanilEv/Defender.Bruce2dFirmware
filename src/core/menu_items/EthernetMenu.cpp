@@ -1,5 +1,5 @@
 #include "EthernetMenu.h"
-#if !defined(LITE_VERSION)
+#if !defined(LITE_VERSION) && !defined(DISABLE_ETHERNET)
 #include "core/display.h"
 #include "core/settings.h"
 #include "core/utils.h"

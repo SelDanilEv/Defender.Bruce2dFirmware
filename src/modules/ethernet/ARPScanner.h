@@ -29,5 +29,6 @@ public:
 };
 
 void run_arp_scanner();
+bool scanLocalHosts();
 #endif // ARP_SCANNER_H
 #endif

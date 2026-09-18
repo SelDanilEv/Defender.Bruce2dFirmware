@@ -73,6 +73,14 @@ void ensureWifiPlatform();
  */
 bool isWifiTransitioning();
 
+/**
+ * @brief Ensures WiFi is connected, prompting the connect menu if needed
+ * @param errMsg message shown via displayError if the connection attempt fails
+ * @param waitForKey when true, the error blocks until a key is pressed
+ * @return true if WiFi is connected (already, or after the connect menu)
+ */
+bool ensureWifiConnected(const char *errMsg = "WiFi not connected", bool waitForKey = false);
+
 // private
 /**
  * @brief Connects to wifiNetwork

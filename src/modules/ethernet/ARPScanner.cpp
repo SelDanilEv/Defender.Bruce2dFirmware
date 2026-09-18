@@ -44,6 +44,17 @@ ARPScanner::ARPScanner(esp_netif_t *_esp_net_interface) {
     setup();
 }
 
+bool scanLocalHosts() {
+    esp_netif_t *esp_netinterface = esp_netif_get_handle_from_ifkey("WIFI_STA_DEF");
+    if (esp_netinterface == nullptr) {
+        Serial.println("Failed to get netif handle. Connect to a network first.");
+        return false;
+    }
+    // ARPScanner runs the scan from its constructor, hence the named local instead of a temporary
+    ARPScanner scanner{esp_netinterface};
+    return true;
+}
+
 ARPScanner::~ARPScanner() {}
 
 #define ETH_HDRLEN 14 // Ethernet header length

@@ -3,7 +3,7 @@
 
 #include "modules/ethernet/EthernetHelper.h"
 #include <MenuItemInterface.h>
-#if !defined(LITE_VERSION)
+#if !defined(LITE_VERSION) && !defined(DISABLE_ETHERNET)
 class EthernetMenu : public MenuItemInterface {
 private:
     EthernetHelper *eth;

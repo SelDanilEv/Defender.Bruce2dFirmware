@@ -1,3 +1,4 @@
+#if !defined(DISABLE_GPS)
 #include "GpsMenu.h"
 #include "core/display.h"
 #include "core/settings.h"
@@ -62,3 +63,4 @@ void GpsMenu::drawIcon(float scale) {
 
     tft.drawEllipse(iconCenterX, iconCenterY + 1.5 * radius, 1.5 * radius, radius / 2, bruceConfig.priColor);
 }
+#endif // DISABLE_GPS

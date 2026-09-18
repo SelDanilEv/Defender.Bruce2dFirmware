@@ -293,6 +293,15 @@ bool wifiConnectMenu(wifi_mode_t mode) {
     return wifiConnected;
 }
 
+bool ensureWifiConnected(const char *errMsg, bool waitForKey) {
+    if (!wifiConnected) wifiConnectMenu();
+    if (!wifiConnected) {
+        displayError(errMsg, waitForKey);
+        return false;
+    }
+    return true;
+}
+
 void wifiConnectTask(void *pvParameters) {
     if (WiFi.isConnected()) return;
 

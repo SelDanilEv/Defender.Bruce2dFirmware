@@ -76,13 +76,7 @@ static void sendSocks4Reply(WiFiClient &client, uint8_t cd, uint16_t dstPort, co
 }
 
 void socks4Proxy(uint16_t port) {
-    if (!wifiConnected) {
-        wifiConnectMenu();
-        if (!wifiConnected) {
-            displayError("Connect to WiFi first", true);
-            return;
-        }
-    }
+    if (!ensureWifiConnected("Connect to WiFi first", true)) return;
 
     WiFiServer server(port);
     server.begin();

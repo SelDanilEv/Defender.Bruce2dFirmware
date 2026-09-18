@@ -21,6 +21,8 @@ Before any code search or change: query `graphify-out/` first.
 
 Bruce is an ESP32 firmware for offensive-security / red-team tooling (WiFi, BLE, RF sub-GHz, RFID/NFC, IR, NRF24, GPS, FM, USB/BLE HID injection, JS interpreter). Built with PlatformIO + Arduino framework, C++17-ish (Arduino core), targets 30+ boards (M5Stack, LILYGO, CYD clones, RockBase, Elecrow, custom Bruce PCBs). AGPL licensed. Upstream docs: https://wiki.bruce.computer.
 
+Primary target board: the LILYGO T-Embed CC1101, env `lilygo-t-embed-cc1101` (`boards/lilygo-t-embed-cc1101/lilygo-t-embed-cc1101.ini`; distinct from its `lilygo-t-embed-cc1101-slim` variant). Prioritize this env when a change forces a board-specific tradeoff, and keep every other board env building.
+
 ## Repo layout
 
 Verified against actual directory tree at repo root:
@@ -114,6 +116,17 @@ Requires g++ with C++17 on PATH; compiles the test plus the production `.cpp` di
 - `.github/ISSUE_TEMPLATE/bug_report.md` and `feature_request.md` are the issue templates.
 - No commit-message convention file exists in the repo; commit history is free-form, imperative short summaries.
 - CI (`PR_check.yml`) runs on every PR touching code/config files against `main`/`dev`; keep builds green for the affected board envs before requesting review.
+
+## Upstream sync (monthly)
+
+This repo is a fork of `upstream` (https://github.com/BruceDevices/firmware, branch `main`). Once a month, pull upstream changes in:
+1. `git fetch upstream`, then `git log --oneline HEAD..upstream/main` to review what is new.
+2. Branch `sync/upstream-YYYY-MM` from `main`, `git merge upstream/main`.
+3. Resolve conflicts keeping fork features (Bruce-2D branding, WiFi Repeater, OBD Dashboard, `VERSION`/`Bruce2D-*.bin` versioning, CI bin globs) while taking upstream fixes.
+4. Build `lilygo-t-embed-cc1101` (must pass), plus any env touched by conflicts; run `bash tests/run_host_tests.sh`.
+5. Bump minor in `VERSION`, refresh graphify, merge to `main`, push.
+
+Last sync base: upstream `a59213f3` (2026-09-09).
 
 ## Do-not-touch
 

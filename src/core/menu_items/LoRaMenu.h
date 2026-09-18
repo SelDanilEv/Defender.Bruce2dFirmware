@@ -1,6 +1,6 @@
 #ifndef __LORA_MENU_H__
 #define __LORA_MENU_H__
-#if !defined(LITE_VERSION)
+#if !defined(LITE_VERSION) && !defined(DISABLE_LORA)
 #include <MenuItemInterface.h>
 
 void lorachat();

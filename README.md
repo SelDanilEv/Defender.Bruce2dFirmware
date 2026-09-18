@@ -6,6 +6,8 @@ Bruce is a versatile ESP32 firmware packed with offensive-security tools, built 
 
 It also supports [M5Stack](https://shop.m5stack.com), [LILYGO](https://lilygo.cc) , [RockBase IoT](https://www.rockbaseiot.com) and [Elecrow](https://www.elecrow.com) products, and works great with the Cardputer, Sticks, M5Cores, T-Decks and T-Embeds.
 
+The **LILYGO T-Embed CC1101** (`lilygo-t-embed-cc1101`) is the primary target board for Bruce-2D: it is built and optimized first, with new features landing there before other boards. All other supported boards above continue to be built and maintained.
+
 ## :zap: Get Our Official DevKit!
 
 # RF REAPER

@@ -3,8 +3,10 @@
 #include "display.h" // using displayRedStripe as error msg
 #include "modules/badusb_ble/ducky_typer.h"
 #include "modules/bjs_interpreter/interpreter.h"
+#if !defined(DISABLE_GPS)
 #include "modules/gps/wdgwars.h"
 #include "modules/gps/wigle.h"
+#endif
 #include "modules/ir/TV-B-Gone.h"
 #include "modules/ir/custom_ir.h"
 #include "modules/others/audio.h"
@@ -833,6 +835,7 @@ String loopSD(FS &fs, bool filePicker, const String &allowed_ext, String rootPat
                                                              if (readSubFile(&fs, filepath, data))
                                                                  txSubFile(data);
                                                          }});
+#if !defined(DISABLE_GPS)
                     if (filepath.endsWith(".csv")) {
                         options.insert(options.begin(), {"Wigle Upload", [&]() {
                                                              delay(200);
@@ -855,6 +858,7 @@ String loopSD(FS &fs, bool filePicker, const String &allowed_ext, String rootPat
                                                              wdg.upload_all(&fs, Folder);
                                                          }});
                     }
+#endif
 #if !defined(LITE_VERSION) && !defined(DISABLE_INTERPRETER)
                     if (filepath.endsWith(".bjs") || filepath.endsWith(".js")) {
                         options.insert(options.begin(), {"JS Script Run", [&]() {
