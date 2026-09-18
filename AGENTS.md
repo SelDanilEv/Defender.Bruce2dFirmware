@@ -47,7 +47,10 @@ Direct PlatformIO:
 ```
 pio run -e <environment>
 ```
-Merged flashable binary is written to repo root as `Bruce-<environment>.bin`.
+Merged flashable binary is written to repo root as `Bruce2D-<tag>-v<X.Y.Z>.bin` (`<tag>` is `tembed` for
+`lilygo-t-embed-cc1101`, `tembed-slim` for `lilygo-t-embed-cc1101-slim`, otherwise the raw env name). The
+version comes from root `VERSION` (`X.Y`, hand-edited) plus an auto-bumped patch tracked in local, git-ignored
+`build_version.txt`: each build increments the patch unless `VERSION` changed, in which case it resets to 0.
 
 Windows helper script `build-firmware.ps1` (repo root, local convenience script):
 ```

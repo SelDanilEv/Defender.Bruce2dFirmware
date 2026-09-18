@@ -15,13 +15,15 @@ $startedAt = Get-Date
 & $pioPath run -e $Environment
 if ($LASTEXITCODE -ne 0) { throw "Build failed with exit code $LASTEXITCODE" }
 
-$mergedBin = Join-Path $PSScriptRoot "Bruce-$Environment.bin"
-if (-not (Test-Path $mergedBin) -or (Get-Item $mergedBin).LastWriteTime -lt $startedAt) {
-    throw "Merged binary not produced: $mergedBin"
+$bin = Get-ChildItem -Path $PSScriptRoot -Filter "Bruce2D-*.bin" |
+    Where-Object { $_.LastWriteTime -ge $startedAt } |
+    Sort-Object LastWriteTime -Descending |
+    Select-Object -First 1
+if (-not $bin) {
+    throw "Merged binary not produced for env '$Environment'"
 }
 
 $elapsed = (Get-Date) - $startedAt
-$bin = Get-Item $mergedBin
 Write-Host ""
 Write-Host "Build OK in $([int]$elapsed.TotalMinutes)m $($elapsed.Seconds)s"
 Write-Host "Firmware: $($bin.FullName) ($($bin.Length) bytes)"

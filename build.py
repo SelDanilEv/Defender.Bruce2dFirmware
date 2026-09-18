@@ -33,7 +33,19 @@ boot_bin = build_dir / "bootloader.bin"
 part_bin = build_dir / "partitions.bin"
 app_bin  = build_dir / "firmware.bin"
 
-out_bin  = proj_dir / f"Bruce-{pioenv}.bin"
+BOARD_TAGS = {
+    "lilygo-t-embed-cc1101": "tembed",
+    "lilygo-t-embed-cc1101-slim": "tembed-slim",
+}
+
+
+def _board_tag():
+    return BOARD_TAGS.get(pioenv, pioenv)
+
+
+def _full_version():
+    with open(proj_dir / "build_version.txt", "r") as f:
+        return f.read().strip()
 
 # Esptool from PlatformIO + Python executable
 esptool_pkg = senv.PioPlatform().get_package_dir("tool-esptoolpy")
@@ -48,6 +60,8 @@ def _merge_bins_callback(target, source, env):
     Merges bootloader, partitions, and app into a single binary.
     NOTE: This function signature must be (target, source, env) so SCons can call it.
     """
+    out_bin = proj_dir / f"Bruce2D-{_board_tag()}-v{_full_version()}.bin"
+
     # Check files
     missing = [p for p in [boot_bin, part_bin, app_bin] if not p.exists()]
     if missing:

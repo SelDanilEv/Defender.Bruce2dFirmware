@@ -15,7 +15,7 @@ tests/*.exe
 include/webFiles.h
 include/current_year.h
 include/build_version.h
-build_number.txt
+build_version.txt
 checksum.sha256
 /*.bin
 .vscode/extensions.json

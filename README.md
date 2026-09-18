@@ -29,7 +29,7 @@ More custom devkit boards coming soon! Stay across our communities!
 Alternatively, you can download the latest binary from releases or actions and flash locally using esptool.py
 
 ```sh
-esptool.py --port /dev/ttyACM0 write_flash 0x00000 Bruce-<device>.bin
+esptool.py --port /dev/ttyACM0 write_flash 0x00000 Bruce2D-<device>-v<version>.bin
 ```
 
 **For m5stack devices**
