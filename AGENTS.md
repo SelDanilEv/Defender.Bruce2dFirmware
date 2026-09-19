@@ -30,7 +30,8 @@ Verified against actual directory tree at repo root:
 - `src/main.cpp` - firmware entry point.
 - `src/core/` - platform-independent core: display, config, settings, menu system, keyboard/input, SD/LittleFS, connectivity glue, serial commands (`src/core/serial_commands/`), USB (`src/core/USBSerial/`), WiFi common helpers (`src/core/wifi/`).
 - `src/core/menu_items/` - one class per top-level menu (`WifiMenu`, `BleMenu`, `RFMenu`, `RFIDMenu`, `IRMenu`, `NRF24.{h,cpp}`, `GpsMenu`, `FMMenu`, `EthernetMenu`, `LoRaMenu`, `ScriptsMenu`, `ClockMenu`, `OthersMenu`, `ConfigMenu`, `FileMenu`, `ConnectMenu`).
-- `src/modules/` - feature implementations grouped by domain: `wifi/`, `ble/`, `ble_api/`, `rf/`, `rfid/`, `ir/`, `NRF24/`, `gps/`, `fm/`, `lora/`, `ethernet/`, `pwnagotchi/`, `bjs_interpreter/` (JS engine), `badusb_ble/`, `reverseShell/`, `others/`.
+- `src/modules/` - feature implementations grouped by domain: `wifi/`, `ble/`, `ble_api/`, `rf/`, `rfid/`, `ir/`, `NRF24/`, `gps/`, `fm/`, `lora/`, `ethernet/`, `pwnagotchi/`, `bjs_interpreter/` (JS engine), `badusb_ble/`, `reverseShell/`, `others/`, `obd/`.
+- `src/modules/obd/` - OBD Dashboard (Others menu): `obd_pids.*` (pure ELM327 reply parsing and PID decoding, host-testable), `obd_poll_scheduler.*` (pure most-overdue poll scheduler, host-testable), `elm327_client.*` (WiFiClient transport, reply/command pairing, resync and reconnect), `obd_dashboard.*` (entry point, UI, poll tasks).
 - `boards/<board>/` - per-board PlatformIO `.ini` fragment, `interface.cpp`/pin headers, board `.json`. `boards/_boards_json/` holds PlatformIO board defs, `boards/_New-Device-Model/` is the template for adding a board, `boards/pinouts/` has shared pin headers.
 - `include/` - generated/shared headers (e.g. embedded web assets, build-year define). Do not hand-edit generated ones (see do-not-touch).
 - `lib/` - vendored/third-party libraries pulled in as PlatformIO libs. Treat as do-not-touch (see below).
@@ -110,11 +111,11 @@ New modules wanting SD-only debug logging use `core/debug_log.h`'s `DebugLog` AP
 
 ## Testing notes
 
-`tests/` contains host-side (desktop g++, not ESP32) unit tests, currently covering `src/modules/wifi/wifi_repeater_state.cpp` (`RepeaterState` state machine) via `tests/wifi_repeater_state_test.cpp`. Run with:
+`tests/` contains host-side (desktop g++, not ESP32) unit tests, currently covering `src/modules/wifi/wifi_repeater_state.cpp` (`RepeaterState` state machine) via `tests/wifi_repeater_state_test.cpp`, and `src/modules/obd/obd_pids.cpp` plus `src/modules/obd/obd_poll_scheduler.cpp` (ELM327 reply parsing, PID decoding, consumption math, poll scheduling) via `tests/obd_pids_test.cpp`. Run with:
 ```
 bash tests/run_host_tests.sh
 ```
-Requires g++ with C++17 on PATH; compiles the test plus the production `.cpp` directly (no mocking framework), fails non-zero on any assertion failure. `tests/wifi_repeater_state_test.exe` is a local build artifact (git-ignored via `tests/*.exe`), not checked in. There is no on-device/hardware-in-the-loop test suite; CI validates by compiling every board env (see Build commands).
+Requires g++ with C++17 on PATH; compiles each test plus the production `.cpp` files directly (no mocking framework), fails non-zero on any assertion failure. `tests/wifi_repeater_state_test.exe` and `tests/obd_pids_test.exe` are local build artifacts (git-ignored via `tests/*.exe`), not checked in. There is no on-device/hardware-in-the-loop test suite; CI validates by compiling every board env (see Build commands).
 
 ## Commit / PR conventions
 
