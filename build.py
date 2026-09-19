@@ -1,5 +1,6 @@
 from pathlib import Path
 import csv
+import os
 from SCons.Script import Import
 
 # Import PlatformIO's SCons environment
@@ -38,9 +39,18 @@ BOARD_TAGS = {
     "lilygo-t-embed-cc1101-slim": "tembed-slim",
 }
 
+# Single signal for "this is a debug build", used for both the compile define and the
+# bin-name suffix so they never disagree: either BRUCE_DEBUG=1 in the OS environment
+# (any board built ad hoc as debug), or a dedicated "<env>-debug" PlatformIO env.
+IS_DEBUG_BUILD = os.environ.get("BRUCE_DEBUG") == "1" or pioenv.endswith("-debug")
+
+if IS_DEBUG_BUILD:
+    senv.Append(CPPDEFINES=["BRUCE_DEBUG_LOG"])
+
 
 def _board_tag():
-    return BOARD_TAGS.get(pioenv, pioenv)
+    base_pioenv = pioenv[: -len("-debug")] if pioenv.endswith("-debug") else pioenv
+    return BOARD_TAGS.get(base_pioenv, base_pioenv)
 
 
 def _full_version():
@@ -60,7 +70,8 @@ def _merge_bins_callback(target, source, env):
     Merges bootloader, partitions, and app into a single binary.
     NOTE: This function signature must be (target, source, env) so SCons can call it.
     """
-    out_bin = proj_dir / f"Bruce2D-{_board_tag()}-v{_full_version()}.bin"
+    debug_suffix = "-debug" if IS_DEBUG_BUILD else ""
+    out_bin = proj_dir / f"Bruce2D-{_board_tag()}-v{_full_version()}{debug_suffix}.bin"
 
     # Check files
     missing = [p for p in [boot_bin, part_bin, app_bin] if not p.exists()]

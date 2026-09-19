@@ -67,6 +67,12 @@ docker compose up --build
 
 CI (`.github/workflows/`): `PR_check.yml` and `buil_parallel.yml` build a matrix of envs on every PR touching `**.yml|.h|.cpp|.py|.html|.css|.js|.ini|.json|.csv`; `manual_build_sel_env.yml` and `PR_All_envs.yml` are `workflow_dispatch` variants for building one or all envs on demand.
 
+Debug builds: env `lilygo-t-embed-cc1101-debug` (`boards/lilygo-t-embed-cc1101/lilygo-t-embed-cc1101.ini`) extends the primary env and adds `-DBRUCE_DEBUG_LOG`. Any env also gets this define by setting `BRUCE_DEBUG=1` in the OS environment before `pio run` (`build.py` checks both signals). A debug build's merged bin gets a `-debug` suffix: `Bruce2D-<tag>-v<X.Y.Z>-debug.bin`. `build-firmware.ps1 -DebugBuild` builds `<Environment>-debug` and looks for the suffixed bin.
+
+## Debug logging
+
+New modules wanting SD-only debug logging use `core/debug_log.h`'s `DebugLog` API (`DebugLog::write(module, tag, text)`, `DebugLog::flush(module)`, `DebugLog::active()`). Logs land under `/BruceLogs/<module>.log` on SD, tab-separated `<millis>\t<TAG>\t<text>`, rotated once per session to `<module>_prev.log`. Active only in debug builds (`BRUCE_DEBUG_LOG` defined); calls are no-ops otherwise, so call sites need no `#if` guards.
+
 ## Coding conventions
 
 **Mandatory. Every AI agent MUST follow these rules and match the surrounding code in any file it touches. `clang-format` is authoritative for formatting: run it before committing; do not fight it by hand.** Rules below are extracted from the real codebase; each cites example files.

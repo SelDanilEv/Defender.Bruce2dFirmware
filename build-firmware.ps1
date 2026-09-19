@@ -1,7 +1,8 @@
 param(
     [string]$Environment = "lilygo-t-embed-cc1101",
     [string]$CopyTo = "",
-    [string]$TargetName = "bruce-2d-cc1101.bin"
+    [string]$TargetName = "bruce-2d-cc1101.bin",
+    [switch]$DebugBuild
 )
 
 $ErrorActionPreference = "Stop"
@@ -11,16 +12,19 @@ $pio = Get-Command pio -ErrorAction SilentlyContinue
 $pioPath = if ($pio) { $pio.Source } else { Join-Path $env:USERPROFILE ".platformio\penv\Scripts\pio.exe" }
 if (-not (Test-Path $pioPath)) { throw "PlatformIO not found. Install it or add pio to PATH." }
 
+$buildEnvironment = if ($DebugBuild) { "$Environment-debug" } else { $Environment }
+
 $startedAt = Get-Date
-& $pioPath run -e $Environment
+& $pioPath run -e $buildEnvironment
 if ($LASTEXITCODE -ne 0) { throw "Build failed with exit code $LASTEXITCODE" }
 
-$bin = Get-ChildItem -Path $PSScriptRoot -Filter "Bruce2D-*.bin" |
-    Where-Object { $_.LastWriteTime -ge $startedAt } |
+$binFilter = if ($DebugBuild) { "Bruce2D-*-debug.bin" } else { "Bruce2D-*.bin" }
+$bin = Get-ChildItem -Path $PSScriptRoot -Filter $binFilter |
+    Where-Object { $_.LastWriteTime -ge $startedAt -and ($DebugBuild -or $_.Name -notlike "*-debug.bin") } |
     Sort-Object LastWriteTime -Descending |
     Select-Object -First 1
 if (-not $bin) {
-    throw "Merged binary not produced for env '$Environment'"
+    throw "Merged binary not produced for env '$buildEnvironment'"
 }
 
 $elapsed = (Get-Date) - $startedAt
