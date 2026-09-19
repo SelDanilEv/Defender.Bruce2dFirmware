@@ -9,6 +9,7 @@
 #include "modules/obd/obd_pids.h"
 #include "modules/obd/obd_poll_scheduler.h"
 
+#include <Preferences.h>
 #include <bitset>
 #include <globals.h>
 
@@ -18,6 +19,8 @@ const char *DEFAULT_OBD_HOST = "192.168.0.10";
 const uint16_t DEFAULT_OBD_PORT = 35000;
 const long MAX_TCP_PORT = 65535;
 const float DEFAULT_TANK_L = 50.0f;
+const char *TANK_SIZE_NS = "obd";
+const char *TANK_SIZE_KEY = "tankL";
 const float DEFAULT_CONSUMPTION_L_PER_100 = 8.0f;
 const unsigned long OBD_INPUT_POLL_MS = 20;
 const unsigned long OBD_REDRAW_INTERVAL_MS = 1000;
@@ -84,6 +87,21 @@ struct TaskBinding {
     int arg = 0;
 };
 
+float loadTankSize() {
+    Preferences prefs;
+    if (!prefs.begin(TANK_SIZE_NS, true)) return DEFAULT_TANK_L;
+    float value = prefs.getFloat(TANK_SIZE_KEY, DEFAULT_TANK_L);
+    prefs.end();
+    return value > 0 ? value : DEFAULT_TANK_L;
+}
+
+void saveTankSize(float value) {
+    Preferences prefs;
+    if (!prefs.begin(TANK_SIZE_NS, false)) return;
+    prefs.putFloat(TANK_SIZE_KEY, value);
+    prefs.end();
+}
+
 struct ObdDashboard {
     Elm327Client elm;
     PidSupport pidSupport;
@@ -111,7 +129,7 @@ struct ObdDashboard {
     int activeThrottleIdx = 0;
     const char *lastThrottleTag = THROTTLE_METHODS[0].shortTag;
 
-    ObdDashboard(const String &host, uint16_t port) : elm(host, port) {}
+    ObdDashboard(const String &host, uint16_t port) : elm(host, port) { tankL = loadTankSize(); }
 };
 
 void logInfo(const String &text) { DebugLog::write(OBD_LOG_MODULE, "INFO", text); }
@@ -361,6 +379,7 @@ void setTankSize(ObdDashboard &dash) {
     float value = input.toFloat();
     if (value <= 0) return;
     dash.tankL = value;
+    saveTankSize(value);
     if (dash.haveLevel) dash.lastLiters = dash.lastPercent / obd::PERCENT_SCALE * dash.tankL;
 }
 
