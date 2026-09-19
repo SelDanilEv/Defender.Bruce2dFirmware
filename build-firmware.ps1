@@ -18,9 +18,9 @@ $startedAt = Get-Date
 & $pioPath run -e $buildEnvironment
 if ($LASTEXITCODE -ne 0) { throw "Build failed with exit code $LASTEXITCODE" }
 
-$binFilter = if ($DebugBuild) { "Bruce2D-*-debug.bin" } else { "Bruce2D-*.bin" }
+$binFilter = if ($DebugBuild) { "Bruce2D-*-dv*.bin" } else { "Bruce2D-*.bin" }
 $bin = Get-ChildItem -Path $PSScriptRoot -Filter $binFilter |
-    Where-Object { $_.LastWriteTime -ge $startedAt -and ($DebugBuild -or $_.Name -notlike "*-debug.bin") } |
+    Where-Object { $_.LastWriteTime -ge $startedAt -and ($DebugBuild -or $_.Name -notlike "*-dv*.bin") } |
     Sort-Object LastWriteTime -Descending |
     Select-Object -First 1
 if (-not $bin) {

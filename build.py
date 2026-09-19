@@ -70,8 +70,8 @@ def _merge_bins_callback(target, source, env):
     Merges bootloader, partitions, and app into a single binary.
     NOTE: This function signature must be (target, source, env) so SCons can call it.
     """
-    debug_suffix = "-debug" if IS_DEBUG_BUILD else ""
-    out_bin = proj_dir / f"Bruce2D-{_board_tag()}-v{_full_version()}{debug_suffix}.bin"
+    version_prefix = "dv" if IS_DEBUG_BUILD else "v"
+    out_bin = proj_dir / f"Bruce2D-{_board_tag()}-{version_prefix}{_full_version()}.bin"
 
     # Check files
     missing = [p for p in [boot_bin, part_bin, app_bin] if not p.exists()]
